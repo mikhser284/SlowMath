@@ -26,6 +26,13 @@
                 { 9, 2, 3, 1 }
             }).View();
 
+            //Matrix m = new Matrix(new double[,]
+            //{
+            //    { 3, 0, 1, },
+            //    { 4, 1, 2, },
+            //    { 3, 2, 1, },
+            //}).View();
+
             Console.WriteLine($"Det({nameof(m)}) = {m.Determinant()}");
             Console.WriteLine($"#Expected Det({nameof(m)}) = 24");
 

@@ -326,12 +326,12 @@ namespace SlowMath
                 for(Int32 r = 0; r < matrix.RowsCount; r++)
                 {
                     Matrix subMatrix = matrix.GetSubMatrix(r, indexRowOrCol);
-                    if(subMatrix.RankIsEqual(2))
+                    if(matrix[r, indexRowOrCol] == 0)
+                        minors[r, 0] = 0;
+                    else if(subMatrix.RankIsEqual(2))
                         minors[r, 0] = Det2x2(subMatrix);
                     else
-                    {
-                        minors[r, 0] = matrix[r, indexRowOrCol] == 0 ? 0 : matrix[r, indexRowOrCol] * subMatrix.Determinant();                        
-                    }
+                        minors[r, 0] = matrix[r, indexRowOrCol] * subMatrix.Determinant();
                 }
             }
             else if(matrixOrientation == MatrixIs.Row)
@@ -340,12 +340,12 @@ namespace SlowMath
                 for(Int32 c = 0; c < matrix.ColumnsCount; c++)
                 {
                     Matrix subMatrix = matrix.GetSubMatrix(indexRowOrCol, c);
+                    if(matrix[indexRowOrCol, c] == 0)
+                        minors[0, c] = 0;
                     if(subMatrix.RankIsEqual(2))
                         minors[0, c] = Det2x2(subMatrix);
                     else
-                    {
-                        minors[0, c] = matrix[indexRowOrCol, c] == 0 ? 0 : matrix[indexRowOrCol, c] * subMatrix.Determinant();
-                    }
+                        minors[0, c] = matrix[indexRowOrCol, c] * subMatrix.Determinant();
                 }
             }
 
