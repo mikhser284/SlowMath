@@ -271,13 +271,13 @@ namespace SlowMath
             if(maxNullsInSingleCol >= maxNullsInSingleRow)
             {
                 matrixOrientation = MatrixIs.Column;
-                return colWithMaxNullsIndex;
+                return colWithMaxNullsIndex ?? 0;
             }
 
             if(maxNullsInSingleRow >= maxNullsInSingleCol)
             {
                 matrixOrientation = MatrixIs.Row;
-                return rowWithMaxNullsIndex;
+                return rowWithMaxNullsIndex ?? 0;
             }
 
             matrixOrientation = MatrixIs.Column;
@@ -330,9 +330,7 @@ namespace SlowMath
                         minors[r, 0] = Det2x2(subMatrix);
                     else
                     {
-                        throw new NotImplementedException();
-                        Matrix lowerRangeMatrix = subMatrix.GetSubMatrix(0, 0);
-                        minors[r, 0] = lowerRangeMatrix.Determinant();
+                        minors[r, 0] = matrix[r, indexRowOrCol] == 0 ? 0 : matrix[r, indexRowOrCol] * subMatrix.Determinant();                        
                     }
                 }
             }
@@ -346,9 +344,7 @@ namespace SlowMath
                         minors[0, c] = Det2x2(subMatrix);
                     else
                     {
-                        throw new NotImplementedException();
-                        Matrix lowerRangeMatrix = subMatrix.GetSubMatrix(0, 0);
-                        minors[0, c] = lowerRangeMatrix.Determinant();
+                        minors[0, c] = matrix[indexRowOrCol, c] == 0 ? 0 : matrix[indexRowOrCol, c] * subMatrix.Determinant();
                     }
                 }
             }

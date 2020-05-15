@@ -7,16 +7,27 @@
     {
         static void Main(string[] args)
         {
+            //Matrix m = new Matrix(new double[,]
+            //{
+            //    { 7.0,  0.0, 55.0, 230.0 },
+            //    { 5.0,  2.5,  4.8,  60.0 },
+            //    { 1.0, 97.0,  0.0, 780.0 },
+            //    { 2.0,  0.1, 19.7,  90.0 }
+            //}).View();
+
+            //Console.WriteLine($"Det({nameof(m)}) = {m.Determinant()}");
+            //Console.WriteLine($"#Expected Det({nameof(m)}) = 212378,9");
+
             Matrix m = new Matrix(new double[,]
             {
-                { 7.0,  0.0, 55.0, 230.0 },
-                { 5.0,  2.5,  4.8,  60.0 },
-                { 1.0, 97.0,  0.0, 780.0 },
-                { 2.0,  0.1, 19.7,  90.0 }
+                { 3, 2, 0, 1 },
+                { 4, 0, 1, 2 },
+                { 3, 0, 2, 1 },
+                { 9, 2, 3, 1 }
             }).View();
 
             Console.WriteLine($"Det({nameof(m)}) = {m.Determinant()}");
-            Console.WriteLine($"#Expected Det({nameof(m)}) = 212378,9");
+            Console.WriteLine($"#Expected Det({nameof(m)}) = 24");
 
             //Matrix minors = Matrix.GetDeterminant(m).View();
 
