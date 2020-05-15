@@ -25,6 +25,26 @@ namespace SlowMath
         /// <summary> Количество строк матрицы </summary>
         public Int32 RowsCount { get => _matrix.GetLength(0); }
 
+        public List<Matrix> Rows
+        {
+            get
+            {
+                List<Matrix> rows = new List<Matrix>();
+                for(Int32 r = 0; r < RowsCount; r++) rows.Add(GetRow(r));
+                return rows;
+            }
+        }
+
+        public List<Matrix> Columns
+        {
+            get
+            {
+                List<Matrix> columns = new List<Matrix>();
+                for(Int32 c = 0; c < ColumnsCount; c++) columns.Add(GetColumn(c));
+                return columns;
+            }
+        }
+
         /// <summary> Получить строку матрицы </summary>
         /// <param name="rowIndex"> Индекс строки </param>
         /// <returns> Матрица содержащая указанную строку </returns>
@@ -53,6 +73,8 @@ namespace SlowMath
 
         public Boolean RankIsEqual(Int32 rank) => RowsCount == rank && ColumnsCount == rank;
 
+        public Int32? Rank { get => IsSquareMatrix == false ? null : (Int32?)RowsCount; }
+
         public override string ToString()
         {
             List<String> rows = new List<string>();
@@ -80,6 +102,8 @@ namespace SlowMath
         }
 
         public Matrix View(String description) => View(false, description);
+
+
     }
 
     /// <summary> Инициализация </summary>
@@ -107,13 +131,15 @@ namespace SlowMath
             _matrix = CreateMatrixArray(rowsCount, columnsCount);
         }
 
-        public Matrix(Int32 rowsCount, Int32 columnsCount, Func<Int32, Int32, Double> valueByRowCol)
+        public Matrix(Int32 rowsCount, Int32 columnsCount, Func<Int32, Int32, Double> value)
         {
             if(rowsCount < 1) throw new ArgumentException("Количество столбцов матрицы не может быть меньше 1");
             if(columnsCount < 1) throw new ArgumentException("Количество строк матрицы не может быть меньше 1");
             _matrix = CreateMatrixArray(rowsCount, columnsCount);
-            for(Int32 r = 0; r < RowsCount; r++) for(Int32 c = 0; c < ColumnsCount; c++) this[r, c] = valueByRowCol(r, c);
+            for(Int32 r = 0; r < RowsCount; r++) for(Int32 c = 0; c < ColumnsCount; c++) this[r, c] = value(r, c);
         }
+
+        public Matrix(Int32 rank, Func<Int32, Int32, Double> value) : this(rank, rank, value) { }
 
         public Matrix(Int32 rowsCount, Int32 columnsCount, Double valuesRowCol) : this(rowsCount, columnsCount, (r, c) => valuesRowCol) { }
 
@@ -220,7 +246,7 @@ namespace SlowMath
         }
     }
 
-    public enum MatrixIs
+    public enum VectorOrientation
     {
         Row,
         Column,
@@ -230,7 +256,10 @@ namespace SlowMath
     /// <summary> В разработке </summary>
     public partial class Matrix
     {
-        public Int32? FindCheapestRowOrCol(out MatrixIs matrixOrientation)
+        
+
+        [Obsolete]
+        public Int32? FindCheapestRowOrCol(out VectorOrientation matrixOrientation)
         {
             Int32[] nullsByCols = new Int32[ColumnsCount];
             Int32 maxNullsInSingleCol = 0;
@@ -244,7 +273,7 @@ namespace SlowMath
                     colWithMaxNullsIndex = c;
                     if(maxNullsInSingleCol == ColumnsCount)
                     {
-                        matrixOrientation = MatrixIs.Column;
+                        matrixOrientation = VectorOrientation.Column;
                         return null;
                     }
                 }
@@ -262,7 +291,7 @@ namespace SlowMath
                     rowWithMaxNullsIndex = r;
                     if(maxNullsInSingleRow == RowsCount)
                     {
-                        matrixOrientation = MatrixIs.Row;
+                        matrixOrientation = VectorOrientation.Row;
                         return null;
                     }
                 }
@@ -270,17 +299,17 @@ namespace SlowMath
 
             if(maxNullsInSingleCol >= maxNullsInSingleRow)
             {
-                matrixOrientation = MatrixIs.Column;
+                matrixOrientation = VectorOrientation.Column;
                 return colWithMaxNullsIndex ?? 0;
             }
 
             if(maxNullsInSingleRow >= maxNullsInSingleCol)
             {
-                matrixOrientation = MatrixIs.Row;
+                matrixOrientation = VectorOrientation.Row;
                 return rowWithMaxNullsIndex ?? 0;
             }
 
-            matrixOrientation = MatrixIs.Column;
+            matrixOrientation = VectorOrientation.Column;
             return 0;
         }
 
@@ -293,74 +322,75 @@ namespace SlowMath
         {
             if(RankIsEqual(2)) return Det2x2(this);
 
-            MatrixIs matrixOrientation;
-            Int32? indexRowOrCol = FindCheapestRowOrCol(out matrixOrientation);
+            VectorOrientation matrixOrientation;
+            Int32? index = FindCheapestRowOrCol(out matrixOrientation);
             Double determinant = 0;
-            if(indexRowOrCol == null) return determinant;
+            if(index == null) return determinant;
 
-            if(matrixOrientation == MatrixIs.Column)
+            if(matrixOrientation == VectorOrientation.Column)
             {
-                Matrix minors = GetRowOrColMinors(this, matrixOrientation, (Int32)indexRowOrCol);
-                Matrix cofactors = GetRowOrColCofactors(minors, matrixOrientation, (Int32)indexRowOrCol);
+                Matrix minors = GetRowOrColMinors(this, matrixOrientation, (Int32)index);
+                Matrix cofactors = GetRowOrColCofactors(minors, matrixOrientation, (Int32)index);
                 for(Int32 r = 0; r < RowsCount; r++)
-                    determinant += this[r, (Int32)indexRowOrCol] * cofactors[r, 0];
+                    determinant += this[r, (Int32)index] * cofactors[r, 0];
             }
-            else if(matrixOrientation == MatrixIs.Row)
+            else if(matrixOrientation == VectorOrientation.Row)
             {
-                Matrix minors = GetRowOrColMinors(this, matrixOrientation, (Int32)indexRowOrCol);
-                Matrix cofactors = GetRowOrColCofactors(minors, matrixOrientation, (Int32)indexRowOrCol);
+                Matrix minors = GetRowOrColMinors(this, matrixOrientation, (Int32)index);
+                Matrix cofactors = GetRowOrColCofactors(minors, matrixOrientation, (Int32)index);
                 for(Int32 c = 0; c < ColumnsCount; c++)
-                    determinant += this[(Int32)indexRowOrCol, c] * cofactors[0, c];
+                    determinant += this[(Int32)index, c] * cofactors[0, c];
             }
-
+            
             return determinant;
         }
 
+        
 
-        public static Matrix GetRowOrColMinors(Matrix matrix, MatrixIs matrixOrientation, Int32 indexRowOrCol)
+        public static Matrix GetRowOrColMinors(Matrix matrix, VectorOrientation vectorOrientation, Int32 index)
         {
             Matrix minors = null;
-            if(matrixOrientation == MatrixIs.Column)
+            if(vectorOrientation == VectorOrientation.Column)
             {
                 minors = new Matrix(matrix.RowsCount, 1);
                 for(Int32 r = 0; r < matrix.RowsCount; r++)
                 {
-                    Matrix subMatrix = matrix.GetSubMatrix(r, indexRowOrCol);
-                    if(matrix[r, indexRowOrCol] == 0)
+                    Matrix subMatrix = matrix.GetSubMatrix(r, index);
+                    if(matrix[r, index] == 0)
                         minors[r, 0] = 0;
                     else if(subMatrix.RankIsEqual(2))
                         minors[r, 0] = Det2x2(subMatrix);
                     else
-                        minors[r, 0] = matrix[r, indexRowOrCol] * subMatrix.Determinant();
+                        minors[r, 0] = matrix[r, index] * subMatrix.Determinant();
                 }
             }
-            else if(matrixOrientation == MatrixIs.Row)
+            else if(vectorOrientation == VectorOrientation.Row)
             {
                 minors = new Matrix(1, matrix.ColumnsCount);
                 for(Int32 c = 0; c < matrix.ColumnsCount; c++)
                 {
-                    Matrix subMatrix = matrix.GetSubMatrix(indexRowOrCol, c);
-                    if(matrix[indexRowOrCol, c] == 0)
+                    Matrix subMatrix = matrix.GetSubMatrix(index, c);
+                    if(matrix[index, c] == 0)
                         minors[0, c] = 0;
-                    if(subMatrix.RankIsEqual(2))
+                    else if(subMatrix.RankIsEqual(2))
                         minors[0, c] = Det2x2(subMatrix);
                     else
-                        minors[0, c] = matrix[indexRowOrCol, c] * subMatrix.Determinant();
+                        minors[0, c] = matrix[index, c] * subMatrix.Determinant();
                 }
             }
 
             return minors;
         }
 
-        public static Matrix GetRowOrColCofactors(Matrix minors, MatrixIs matrixOrientation, Int32 indexRowOrCol)
+        public static Matrix GetRowOrColCofactors(Matrix minors, VectorOrientation vectorOrientation, Int32 index)
         {
             Matrix cofactors = minors.Clone();
-            if(matrixOrientation == MatrixIs.Column)
+            if(vectorOrientation == VectorOrientation.Column)
                 for(Int32 r = 0; r < minors.RowsCount; r++)
-                    cofactors[r, 0] *= (IsChangableItem(r, indexRowOrCol) ? -1 : 1);
-            else if(matrixOrientation == MatrixIs.Row)
+                    cofactors[r, 0] *= (IsChangableItem(r, index) ? -1 : 1);
+            else if(vectorOrientation == VectorOrientation.Row)
                 for(Int32 c = 0; c < minors.ColumnsCount; c++)
-                    cofactors[0, c] *= (IsChangableItem(indexRowOrCol, c) ? -1 : 1);
+                    cofactors[0, c] *= (IsChangableItem(index, c) ? -1 : 1);
 
             return cofactors;
             static Boolean IsChangableItem(Int32 rowIndex, Int32 colIndex) => (rowIndex % 2 == 1) != (colIndex % 2 == 1);
@@ -383,7 +413,60 @@ namespace SlowMath
             Int32 ColA(Int32 colB) => colB > excludableColumnIndex ? colB - 1 : colB;
         }
 
-        
+        // ----------------------------------------------
+
+        private Matrix FindCheapestVector(out Int32 indexInOriginalMatrix)
+        {
+            Int32[] nullsByCols = new Int32[ColumnsCount];
+            Int32 maxNullsInSingleCol = 0;
+            Int32? colWithMaxNullsIndex = null;
+            for(Int32 c = 0; c < ColumnsCount; c++)
+            {
+                for(Int32 r = 0; r < RowsCount; r++) nullsByCols[c] += this[r, c] == 0 ? 1 : 0;
+                if(nullsByCols[c] > maxNullsInSingleCol)
+                {
+                    maxNullsInSingleCol = nullsByCols[c];
+                    colWithMaxNullsIndex = c;
+                }
+            }
+
+            Int32[] nullsByRows = new Int32[RowsCount];
+            Int32 maxNullsInSingleRow = 0;
+            Int32? rowWithMaxNullsIndex = null;
+            for(Int32 r = 0; r < RowsCount; r++)
+            {
+                for(Int32 c = 0; c < ColumnsCount; c++) nullsByRows[r] += this[r, c] == 0 ? 1 : 0;
+                if(nullsByRows[r] > maxNullsInSingleRow)
+                {
+                    maxNullsInSingleRow = nullsByRows[r];
+                    rowWithMaxNullsIndex = r;
+                }
+            }
+
+            if(maxNullsInSingleRow > maxNullsInSingleCol)
+            {
+                indexInOriginalMatrix = rowWithMaxNullsIndex ?? 0;
+                return GetRow(indexInOriginalMatrix);
+            }
+
+            indexInOriginalMatrix = colWithMaxNullsIndex ?? 0;
+            return GetColumn(indexInOriginalMatrix);
+        }
+
+        public static Matrix GetCofactorsVector(Matrix matrix, VectorOrientation vectorOrientation, out Int32 indexInOriginalMatrix)
+        {
+            Matrix minors = GetMinorsVector(matrix, matrix.FindCheapestVector(out indexInOriginalMatrix), indexInOriginalMatrix);
+            //Matrix cofactors = new Matrix(matrix.RowsCount, matrix.ColumnsCount, (r, c) => ((r % 2 == 1) != (c % 2 == 1)) ? -1 : 1);
+
+
+
+            throw new NotImplementedException();
+        }
+
+        private static Matrix GetMinorsVector(Matrix matrix, Matrix cheapestVector, Int32 index)
+        {
+            throw new NotImplementedException();
+        }
 
         /// <summary> Получить обратную матрицу </summary>
         /// <returns> Обратная матрица </returns>

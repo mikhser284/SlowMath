@@ -18,6 +18,9 @@
             //Console.WriteLine($"Det({nameof(m)}) = {m.Determinant()}");
             //Console.WriteLine($"#Expected Det({nameof(m)}) = 212378,9");
 
+            Matrix signsMatrix = new Matrix(9, (r, c) => ((r % 2 == 1) != (c % 2 == 1)) ? -1 : 1).View();
+
+
             Matrix m = new Matrix(new double[,]
             {
                 { 3, 2, 0, 1 },
